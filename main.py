@@ -12,7 +12,6 @@ MBTI_LIST = [
     "ESTJ","ESFJ","ENFJ","ENTJ",
 ]
 
-# 각 MBTI에 대해 진로 2개, 적합 학과, 적합 성격(짧게)
 MBTI_CAREERS = {
     "ISTJ": [
         {"career": "회계사 / 세무사 📊", "majors": ["경영학과", "회계학과"], "traits": ["꼼꼼함", "책임감", "규칙준수"]},
@@ -88,10 +87,7 @@ with st.sidebar:
     selected_mbti = st.selectbox("네 MBTI를 골라줘", MBTI_LIST)
     show_details = st.checkbox("자세한 설명 보기", value=True)
 
-# 기본 안내
-if not selected_mbti:
-    st.info("왼쪽에서 MBTI를 선택해줘. 예: ENFP")
-else:
+if selected_mbti:
     st.subheader(f"네 MBTI: {selected_mbti}")
     careers = MBTI_CAREERS.get(selected_mbti, [])
 
@@ -101,9 +97,8 @@ else:
         for idx, item in enumerate(careers, start=1):
             st.markdown(f"### {idx}. {item['career']}")
             st.write("**추천 학과:** " + ", ".join(item['majors']))
-            st.write("**어울리는 성격:** " + ", \join(item['traits']))
+            st.write("**어울리는 성격:** " + ", ".join(item['traits']))
             if show_details:
-                # 친근한 청소년 말투로 한 줄 설명 추가
                 if selected_mbti in ["ENFP", "ESFP", "ENTP"] and idx == 1:
                     extra = "에너지 넘치고 사람 만나는 걸 좋아하면 딱!"
                 elif selected_mbti in ["INTJ", "INFJ"]:
@@ -112,15 +107,7 @@ else:
                     extra = "너의 강점을 살릴 수 있는 길이야."
                 st.write(f"> {extra} 😊")
             st.divider()
-
-# 다운로드 기능: 앱 코드 자체를 다운로드할 수 있게 함
-app_code = """# 이 파일은 Streamlit로 실행되는 MBTI 진로 추천 앱입니다.
-# Streamlit Cloud(Community Cloud)에서 바로 배포 가능합니다.
-# 추가 라이브러리 설치 불필요 — streamlit만 필요합니다.
-
-# (원본 코드와 동일)
-"""
-
-st.download_button(label="앱 코드 다운로드 (.py)", data=st.session_state.get('app_code', '') or '\n'.join([]), file_name="mbti_career_app.py", mime="text/x-python")
+else:
+    st.info("왼쪽에서 MBTI를 선택해줘. 예: ENFP")
 
 st.caption("※ 이 앱은 학습 참고용이에요. 다양한 경험과 상담도 함께 하길 추천해요! 💡")
