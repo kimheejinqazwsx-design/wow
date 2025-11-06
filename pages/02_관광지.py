@@ -1,91 +1,56 @@
-# streamlit_seoul_top10.py
-# Streamlit app that uses folium to show "Top 10 Seoul tourist spots popular with foreigners"
-# Works on Streamlit Cloud. No extra frontend libraries required.
-
 import streamlit as st
 import folium
 from folium.plugins import MarkerCluster
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Seoul Top10 (for foreigners)", layout="wide")
+st.set_page_config(page_title="서울 관광지 TOP10", layout="wide")
 
-st.title("🇰🇷 Seoul Top 10 Tourist Spots (외국인 인기 장소)")
-st.markdown("간단한 설명: 지도에서 장소를 클릭하면 간단한 설명이 나와요. 스트림릿 클라우드에서 바로 작동합니다.")
+st.title("🇰🇷 외국인들이 사랑하는 서울 관광지 TOP 10")
+st.markdown("지도를 확대하거나 마커를 클릭해보세요! 서울의 인기 명소들이 표시됩니다 🗺️")
 
-# Top-10 list: name, latitude, longitude, short description
+# 관광지 데이터
 PLACES = [
-    {"name": "Gyeongbokgung Palace (경복궁)", "lat": 37.579026, "lon": 126.977969, "desc": "Historic royal palace — must-see for hanbok photos! 👑"},
-    {"name": "Bukchon Hanok Village (북촌한옥마을)", "lat": 37.582604, "lon": 126.983677, "desc": "Traditional hanok neighborhood — great alleyway strolls. 🏘️"},
-    {"name": "Myeongdong (명동)", "lat": 37.563828, "lon": 126.985160, "desc": "Shopping & street food heaven — K-beauty & snacks. 🛍️🍡"},
-    {"name": "N Seoul Tower / Namsan Tower (N서울타워)", "lat": 37.551169, "lon": 126.988227, "desc": "Panoramic views of Seoul — best at sunset. 🌇"},
-    {"name": "Hongdae / Hongik Univ. (홍대)", "lat": 37.556264, "lon": 126.923589, "desc": "Youth culture, live music, cafés — energetic vibe. 🎸☕"},
-    {"name": "Dongdaemun Design Plaza (DDP, 동대문디자인플라자)", "lat": 37.566295, "lon": 127.009356, "desc": "Futuristic architecture & night markets. 🏛️✨"},
-    {"name": "Insadong (인사동)", "lat": 37.574063, "lon": 126.985041, "desc": "Traditional crafts, tea houses, souvenirs. 🍵🖼️"},
-    {"name": "Changdeokgung Palace & Huwon (창덕궁)", "lat": 37.579620, "lon": 126.991033, "desc": "UNESCO site with secret garden (Huwon). 🌿"},
-    {"name": "Lotte World Tower / Seoul Sky (롯데월드타워)", "lat": 37.513084, "lon": 127.102501, "desc": "Tallest building in Korea — observation deck & mall. 🏙️"},
-    {"name": "Itaewon (이태원)", "lat": 37.534467, "lon": 126.994995, "desc": "International food & nightlife district. 🍽️🌍"}
+    {"name": "경복궁 (Gyeongbokgung Palace)", "lat": 37.579026, "lon": 126.977969, "desc": "조선의 대표 궁궐! 한복 입고 인증샷 필수 👑"},
+    {"name": "북촌한옥마을 (Bukchon Hanok Village)", "lat": 37.582604, "lon": 126.983677, "desc": "전통 한옥이 모여 있는 예쁜 마을 🏘️"},
+    {"name": "명동 (Myeongdong)", "lat": 37.563828, "lon": 126.985160, "desc": "쇼핑과 길거리 음식 천국! 🛍️🍡"},
+    {"name": "N서울타워 (N Seoul Tower)", "lat": 37.551169, "lon": 126.988227, "desc": "서울을 한눈에! 야경이 최고 🌇"},
+    {"name": "홍대 (Hongdae)", "lat": 37.556264, "lon": 126.923589, "desc": "젊음의 거리, 예술과 음악의 중심 🎸"},
+    {"name": "동대문디자인플라자 (DDP)", "lat": 37.566295, "lon": 127.009356, "desc": "미래형 건축물과 야시장 ✨"},
+    {"name": "인사동 (Insadong)", "lat": 37.574063, "lon": 126.985041, "desc": "전통 공예품과 찻집 거리 🍵"},
+    {"name": "창덕궁 (Changdeokgung Palace)", "lat": 37.579620, "lon": 126.991033, "desc": "유네스코 세계유산, 비밀의 정원 🌿"},
+    {"name": "롯데월드타워 (Lotte World Tower)", "lat": 37.513084, "lon": 127.102501, "desc": "대한민국 최고층 건물! 전망대 필수 🏙️"},
+    {"name": "이태원 (Itaewon)", "lat": 37.534467, "lon": 126.994995, "desc": "세계 각국 음식과 문화가 공존 🍽️🌍"},
 ]
 
-# Sidebar controls
+# 사이드바 설정
 with st.sidebar:
     st.header("지도 설정")
-    zoom = st.slider("초기 줌 레벨", min_value=10, max_value=15, value=12)
-    start_place = st.selectbox("초기 중심 위치 선택", options=[p['name'] for p in PLACES], index=0)
+    zoom = st.slider("초기 줌 레벨", 10, 15, 12)
+    center = st.selectbox("초기 중심 장소", options=[p["name"] for p in PLACES])
 
-# find center coords for chosen start_place
-center = next((p for p in PLACES if p['name'] == start_place), PLACES[0])
+# 선택한 중심지의 좌표 찾기
+center_info = next(p for p in PLACES if p["name"] == center)
 
-# Create folium map
-m = folium.Map(location=[center['lat'], center['lon']], zoom_start=zoom)
+# 지도 생성
+m = folium.Map(location=[center_info["lat"], center_info["lon"]], zoom_start=zoom)
+marker_cluster = MarkerCluster().add_to(m)
 
-# Add marker cluster
-cluster = MarkerCluster().add_to(m)
-
+# 마커 추가
 for p in PLACES:
     popup_html = f"<b>{p['name']}</b><br>{p['desc']}<br><i>위도: {p['lat']}, 경도: {p['lon']}</i>"
     folium.Marker(
-        location=[p['lat'], p['lon']],
+        location=[p["lat"], p["lon"]],
         popup=folium.Popup(popup_html, max_width=300),
-        tooltip=p['name']
-    ).add_to(cluster)
+        tooltip=p["name"]
+    ).add_to(marker_cluster)
 
-# Add a small legend as a FloatImage (using Custom CSS via HTML)
-legend_html = '''
-     <div style="position: fixed; 
-                 bottom: 50px; left: 50px; width: 220px; height: 110px; 
-                 background-color: white; z-index:9999; font-size:14px; 
-                 border:2px solid grey; padding:10px; border-radius:8px;">
-     <b>📍 Seoul Top10 (for foreigners)</b><br>
-     Click markers for details.<br>
-     Tip: zoom in/out and click clusters to expand.
-     </div>
-     '''
-m.get_root().html.add_child(folium.Element(legend_html))
+# 지도 출력
+components.html(m._repr_html_(), height=700, scrolling=False)
 
-# Render map in Streamlit using components.html
-map_html = m._repr_html_()
-components.html(map_html, height=700, scrolling=True)
-
+# 하단 설명
 st.markdown("---")
-col1, col2 = st.columns([2,1])
-with col1:
-    st.subheader("장소 리스트")
-    for i, p in enumerate(PLACES, start=1):
-        st.markdown(f"**{i}. {p['name']}** — {p['desc']}")
-with col2:
-    st.subheader("간단 사용법")
-    st.write("• 지도에서 마커 클릭 → 팝업 확인")
-    st.write("• 사이드바에서 초기 중심 위치와 줌을 바꿔보세요")
+st.subheader("📍 관광지 목록")
+for i, p in enumerate(PLACES, 1):
+    st.markdown(f"**{i}. {p['name']}** — {p['desc']}")
 
-st.caption("데이터는 예시용으로 제공됩니다 — 실제 방문 전 운영시간/요금은 공식 사이트에서 확인하세요.")
-
-# End of app
-
-# requirements.txt content (also included with this file below)
-# -------------------
-# streamlit
-# folium
-#
-# If you'd prefer streamlit-folium for tighter integration, add:
-# streamlit-folium
-# -------------------
+st.caption("⚠️ 정보는 예시이며, 실제 방문 전 공식 사이트에서 확인하세요.")
